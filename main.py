@@ -1,23 +1,43 @@
 # main.py
 import asyncio
-import config
 from swarm_clones import spawn_clone
 from ceo_master import ceo_decision_maker
 
-async def start_jarvis():
-    print("🤖 J.A.R.V.I.S System Online...")
+# கண்காணிக்க வேண்டிய காயின்கள் மற்றும் எக்ஸ்சேஞ்ச்கள்
+TARGETS = [
+    {"coin": "BTC/USDT", "exchange": "binance"},
+    {"coin": "ETH/USDT", "exchange": "bybit"},
+    {"coin": "SOL/USDT", "exchange": "htx"}
+]
+
+# ஸ்கேனிங் இடைவெளி (நொடிகளில்)
+SCAN_INTERVAL = 15
+
+async def main():
+    print("✅ Config Loaded: J.A.R.V.I.S Settings Initialized")
+    print("🤖 J.A.R.V.I.S 24/7 Autonomous Engine Online...")
+    print(f"⏱️ Scanning Interval: Every {SCAN_INTERVAL} seconds\n")
     
-    # டம்மியாக 3 குளோன்களை உருவாக்குதல் (Dynamic Swarm)
-    tasks = [
-        spawn_clone("BTC/USDT", "Binance"),
-        spawn_clone("ETH/USDT", "Bybit"),
-        spawn_clone("SOL/USDT", "HTX")
-    ]
+    loop_count = 1
     
-    signals = await asyncio.gather(*tasks)
-    
-    for signal in signals:
-        await ceo_decision_maker(signal)
+    try:
+        while True:
+            print(f"🔄 --- [ CYCLE #{loop_count} INITIATED ] ---")
+            
+            # அனைத்து குளோன்களையும் ஒரே நேரத்தில் களமிறக்குதல்
+            tasks = [spawn_clone(target["coin"], target["exchange"]) for target in TARGETS]
+            signals = await asyncio.gather(*tasks)
+            
+            # CEO முடிவெடுக்கும் பகுதி
+            for signal in signals:
+                await ceo_decision_maker(signal)
+            
+            print(f"💤 Sleeping for {SCAN_INTERVAL}s before next market cycle...\n")
+            await asyncio.sleep(SCAN_INTERVAL)
+            loop_count += 1
+            
+    except KeyboardInterrupt:
+        print("\n🛑 J.A.R.V.I.S System Safely Shutting Down by User...")
 
 if __name__ == "__main__":
-    asyncio.run(start_jarvis())
+    asyncio.run(main())
