@@ -1,19 +1,22 @@
-# app.py
+# app.py - J.A.R.V.I.S Master Pro Full Integrated Code
 from flask import Flask, render_template, request, redirect, url_for
 import threading
 import asyncio
 import os
-import requests  # இதுதான் எந்தத் தடையும் இல்லாமல் மெசேஜ் அனுப்பும்
+import requests
+import platform
 from dotenv import load_dotenv
 from swarm_clones import spawn_clone
 from ceo_master import ceo_decision_maker
 
-load_dotenv()
+# .env அல்லது .env.txt ஃபைலை ஆட்டோமேட்டிக்காக லோட் செய்ய
+load_dotenv('.env.txt') if os.path.exists('.env.txt') else load_dotenv()
+
 app = Flask(__name__)
 
 latest_signals = []
 bot_status = "RUNNING"
-total_profit = 124.50  # ட்ரேடிங் ப்ராஃபிட் டிராக் செய்ய
+total_profit = 124.50
 
 TARGETS = [
     {"coin": "BTC/USDT", "exchange": "binance"},
@@ -21,14 +24,14 @@ TARGETS = [
     {"coin": "SOL/USDT", "exchange": "htx"}
 ]
 
-# 🚀 புதுப்பிக்கப்பட்ட டெலிகிராம் அலர்ட் சிஸ்டம்
+# 🚀 Telegram Alert Function with Complete Backend & AI Details
 async def send_telegram_alert(message):
     token = os.getenv("TELEGRAM_TOKEN")
     chat_id = os.getenv("TELEGRAM_CHAT_ID")
     if token and chat_id:
         try:
             url = f"https://api.telegram.org/bot{token}/sendMessage"
-            requests.post(url, json={"chat_id": chat_id, "text": message})
+            requests.post(url, json={"chat_id": chat_id, "text": message, "parse_mode": "Markdown"})
             print("✅ Telegram Alert Sent Successfully!")
         except Exception as e:
             print(f"⚠️ Telegram Error: {e}")
@@ -45,11 +48,24 @@ async def background_trading_loop():
                 await ceo_decision_maker(signal)
                 temp_signals.append(signal)
                 
-                # சிக்னல் அப்ரூவ் ஆனால் உடனே டெலிகிராமுக்கு மெசேஜ் போகும்[cite: 3]
-                if signal['action'] == 'BUY' and signal['confidence'] > 60:
-                    total_profit += 2.45
-                    alert_msg = f"🚨 J.A.R.V.I.S Alert: Executed {signal['action']} for {signal['coin']} on {signal['exchange']} at ${signal['price']}\n🎯 Confidence: {signal['confidence']}%"
-                    await send_telegram_alert(alert_msg)
+                # சர்வர் மற்றும் ஹோஸ்டிங் விபரங்களை எடுப்பது
+                server_os = platform.system()
+                server_name = platform.node()
+                
+                # முழுமையான ட்ரேடிங் மற்றும் ஹோஸ்ட் விபரங்களுடன் கூடிய மெசேஜ்
+                alert_msg = (
+                    f"⚡ *J.A.R.V.I.S TRADE ALERT* ⚡\n\n"
+                    f"🖥️ *Backend Host:* `{server_name}` ({server_os})\n"
+                    f"🌐 *Active Clone:* `{signal['clone_id']}`\n"
+                    f"🪙 *Coin:* {signal['coin']}\n"
+                    f"🏢 *Exchange:* {signal['exchange'].upper()}\n"
+                    f"💰 *Price:* ${signal['price']}\n"
+                    f"🎯 *Action:* {signal['action']}\n"
+                    f"🧠 *AI Confidence:* {signal['confidence']}%\n\n"
+                    f"📊 *AI Reasoning (Why?):*\n_{signal['reason']}_"
+                )
+                
+                await send_telegram_alert(alert_msg)
             
             latest_signals = temp_signals
         await asyncio.sleep(15)
@@ -76,20 +92,6 @@ def control():
         bot_status = "STOPPED"
     elif action == 'start':
         bot_status = "RUNNING"
-    return redirect(url_for('dashboard'))
-
-@app.route('/update_config', methods=['POST'])
-def update_config():
-    binance_key = request.form.get('binance_key')
-    tg_token = request.form.get('tg_token')
-    tg_chat = request.form.get('tg_chat')
-    
-    with open('.env', 'w') as f:
-        f.write(f"BINANCE_API_KEY={binance_key}\n")
-        f.write(f"TELEGRAM_TOKEN={tg_token}\n")
-        f.write(f"TELEGRAM_CHAT_ID={tg_chat}\n")
-        
-    load_dotenv(override=True)
     return redirect(url_for('dashboard'))
 
 if __name__ == '__main__':
