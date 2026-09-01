@@ -1,0 +1,8 @@
+flask
+ccxt
+pandas
+scikit-learn
+numpy
+python-dotenv
+requests
+python-telegram-bot
